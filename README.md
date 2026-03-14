@@ -3,7 +3,7 @@
 
 > Real-time satellite & sensor fusion for forest fire, landslide, and flood prediction across Uttarakhand's Himalayan terrain.
 
-🌐 **Live Website:** [https://your-username.github.io/trinetra](https://your-username.github.io/trinetra)
+🌐 **Live Website:** [https://lakshitpandey-25.github.io/trinetra](https://your-username.github.io/trinetra)
 
 ---
 
