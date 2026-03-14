@@ -1,0 +1,141 @@
+# TRINETRA — System Configuration
+# Copy to .env for secrets; keep this file in version control
+
+# ── Study Region ─────────────────────────────────────────────────────────────
+region:
+  name:    "Uttarakhand"
+  lon_min: 77.5
+  lon_max: 81.1
+  lat_min: 28.7
+  lat_max: 31.5
+  crs:     "EPSG:32644"   # WGS84 / UTM Zone 44N
+
+# ── Data Sources ─────────────────────────────────────────────────────────────
+data:
+  sentinel2_collection:  "COPERNICUS/S2_SR_HARMONIZED"
+  sentinel1_collection:  "COPERNICUS/S1_GRD"
+  modis_fire_collection: "FIRMS"
+  modis_ba_collection:   "MODIS/006/MCD64A1"
+  modis_lst_collection:  "MODIS/006/MOD11A2"
+  gpm_collection:        "NASA/GPM_L3/IMERG_V06"
+  srtm_image:            "USGS/SRTMGL1_003"
+  smap_collection:       "NASA_USDA/HSL/SMAP10KM_soil_moisture"
+  hydroshed_flow:        "WWF/HydroSHEDS/15ACC"
+  era5_collection:       "ECMWF/ERA5/DAILY"
+  cloud_cover_threshold: 15    # % max cloud cover for Sentinel-2
+  output_scale_m:        10    # export resolution (metres)
+  output_scale_tabular:  30    # tabular feature resolution
+
+# ── Pipeline Schedule ─────────────────────────────────────────────────────────
+pipeline:
+  ingestion_interval_hours: 24
+  prediction_interval_hours: 6
+  alert_check_interval_min:  15
+  max_backfill_days:         30
+
+# ── Feature Engineering ───────────────────────────────────────────────────────
+features:
+  patch_size:      256
+  patch_stride:    128
+  max_nan_pct:     0.30    # skip patches with > 30% NaN
+  rainfall_window_hours: 72
+  api_decay_factor:      0.85
+  extreme_rain_threshold_mm: 100.0
+  smote_strategy:   "not majority"
+  smote_k_neighbors: 5
+
+# ── Model Parameters ──────────────────────────────────────────────────────────
+models:
+  cnn:
+    patch_size:     256
+    n_channels:     25
+    n_classes:      4
+    batch_size:     16
+    learning_rate:  0.0001
+    epochs:         100
+    early_stop_patience: 20
+    use_attention:  true
+    focal_gamma:    2.0
+    dice_alpha:     0.5
+    class_weights:  [0.5, 3.5, 3.0, 4.0]
+
+  random_forest:
+    n_estimators:        500
+    max_depth:           25
+    min_samples_split:   5
+    min_samples_leaf:    2
+    max_features:        "sqrt"
+    oob_score:           true
+    calibration_method:  "isotonic"
+    spatial_cv_folds:    5
+
+  xgboost:
+    n_estimators_default: 1200
+    learning_rate_default: 0.05
+    max_depth_default:     8
+    early_stopping_rounds: 50
+    hpo_n_trials:          100
+    hpo_timeout_sec:       3600
+    tree_method:           "hist"
+
+  ensemble:
+    meta_learner:    "logistic_regression"
+    meta_C:          1.0
+    meta_max_iter:   1000
+
+# ── Risk Thresholds ───────────────────────────────────────────────────────────
+risk_thresholds:
+  fire:
+    L1: 0.30
+    L2: 0.50
+    L3: 0.70
+    L4: 0.85
+  flood:
+    L1: 0.30
+    L2: 0.50
+    L3: 0.70
+    L4: 0.85
+  landslide:
+    L1: 0.25
+    L2: 0.45
+    L3: 0.65
+    L4: 0.80
+
+# ── Alert System ─────────────────────────────────────────────────────────────
+alerts:
+  min_dispatch_level: "L2"        # minimum level to send SMS
+  sms_dispatch_levels: ["L3","L4"]
+  ivr_dispatch_levels: ["L4"]
+  email_dispatch_levels: ["L2","L3","L4"]
+  webhook_dispatch_levels: ["L2","L3","L4"]
+  cache_ttl_seconds: 900
+
+# ── File Paths ────────────────────────────────────────────────────────────────
+paths:
+  raw_data:    "./data/raw"
+  processed:   "./data/processed"
+  patches:     "./data/patches"
+  labels:      "./data/labels"
+  models:      "./models"
+  outputs:     "./outputs"
+  logs:        "./logs"
+  reports:     "./reports"
+  plots:       "./plots"
+  checkpoints: "./checkpoints"
+
+# ── API ───────────────────────────────────────────────────────────────────────
+api:
+  host:    "0.0.0.0"
+  port:    8000
+  workers: 4
+  log_level: "info"
+  cors_origins: ["*"]
+  rate_limit_per_min: 120
+
+# ── Logging ───────────────────────────────────────────────────────────────────
+logging:
+  level:    "INFO"
+  format:   "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+  log_file: "./logs/trinetra.log"
+  max_bytes: 10485760    # 10 MB
+  backup_count: 5
