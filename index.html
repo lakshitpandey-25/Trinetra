@@ -2779,4 +2779,34 @@ ALERT_TEMPLATES = {
 
     // Scan line
     const scanY = (H * ((t * 1.2) % 100) / 100);
-    const sg = ctx.createLinearGradien
+    const sg = ctx.createLinearGradient(0, scanY - 8, 0, scanY + 8);
+    sg.addColorStop(0, 'transparent');
+    sg.addColorStop(0.5, 'rgba(0,255,136,0.2)');
+    sg.addColorStop(1, 'transparent');
+    ctx.fillStyle = sg;
+    ctx.fillRect(0, scanY - 8, W, 16);
+
+    ctx.strokeStyle = 'rgba(0,255,136,0.06)';
+    ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(0, scanY); ctx.lineTo(W, scanY); ctx.stroke();
+
+    t++;
+    requestAnimationFrame(drawRiskMap);
+  }
+
+  // Start canvas only when visible (fixes blank canvas on first load)
+  const canvasObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        drawRiskMap();
+        canvasObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  const riskCanvas = document.getElementById('riskCanvas');
+  if (riskCanvas) canvasObserver.observe(riskCanvas);
+
+</script>
+</body>
+</html>
